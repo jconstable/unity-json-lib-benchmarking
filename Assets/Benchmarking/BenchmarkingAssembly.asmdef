@@ -1,0 +1,10 @@
+{
+    "name": "BenchmarkingAssembly",
+    "references": [
+        "LibsAssembly"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
