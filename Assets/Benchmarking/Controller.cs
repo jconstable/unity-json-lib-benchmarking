@@ -192,6 +192,9 @@ public class Controller : MonoBehaviour {
             long samples = long.Parse(NumSamplesToRun.text);
             string notes = string.Empty; // Gets overwritten, only last notes are shown
             long avg = 0;
+#if !UNITY_EDITOR
+            long memoryAllocatedDuringAction = 0;
+#endif
 
             if (samples > 0)
             {   
@@ -199,6 +202,11 @@ public class Controller : MonoBehaviour {
                 {
                     Stopwatch timer = new Stopwatch();
 
+#if !UNITY_EDITOR
+                    System.GC.Collect();
+                    UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Disabled;
+                    long totalGCBeforeAction = System.GC.GetTotalMemory(true);
+#endif
 
                     if (Action == JsonAction.Deserialize)
                     {
@@ -215,8 +223,13 @@ public class Controller : MonoBehaviour {
                         throw new System.Exception("Stopwatch timer was not started by wrapper");
 
                     timer.Stop();
-
+                    
                     sum += timer.ElapsedMilliseconds;
+
+#if !UNITY_EDITOR
+                    memoryAllocatedDuringAction += System.GC.GetTotalMemory(true) - totalGCBeforeAction;
+                    UnityEngine.Scripting.GarbageCollector.GCMode = UnityEngine.Scripting.GarbageCollector.Mode.Enabled;
+#endif
 
                     //UnityEngine.Debug.Log(string.Format("----> {0} using {1} took {2}", Action, Lib, timer.ElapsedMilliseconds));
                     yield return null;
@@ -226,8 +239,10 @@ public class Controller : MonoBehaviour {
             }
 
             notes += "\n" + samples.ToString() + " samples taken";
+#if !UNITY_EDITOR
+            notes += "\n" + (memoryAllocatedDuringAction / samples * 1e-6).ToString("F2") + " mb GC allocated";
+#endif
             Notes.text = notes;
-
             LastTimeValue.text = avg.ToString();
         }
         else
